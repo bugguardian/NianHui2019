@@ -14,7 +14,7 @@ public class PhotoLayout
     }
     public Rect[] GetPhotoesLayout(Rect outRect, int total, float titleX, float titleY, float marginX, float marginY)
     {
-        Rect[] rects = new Rect[total];
+        Rect[] rects = new Rect[total] ;
         float sw = (outRect.width + marginX) / (titleX + marginX);
         float w = sw - marginX;
         float h = w / _ratio;
