@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-public class CombineRenderTexture
+public class NHSRenderObject
 {
     public int[] mIds;
 
@@ -15,7 +15,7 @@ public class CombineRenderTexture
     private int RTH = 4096;
 
     private Vector4 mOffsetScale = new Vector4();
-    public CombineRenderTexture(string path)
+    public NHSRenderObject(string path)
     {
         init(path);
     }
