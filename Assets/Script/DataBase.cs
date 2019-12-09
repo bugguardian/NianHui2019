@@ -156,7 +156,7 @@ class DataBase
         return result != null;
     }
 
-    public IEnumerator Normal(int numPerTime, bool isExtra, NormalCallback callBack = null)
+    public IEnumerator Normal(int round, int numPerTime, bool isExtra, NormalCallback callBack = null)
     {
         if(numPerTime <= 0 || isDrawing)
         {
@@ -164,7 +164,7 @@ class DataBase
         }
         isDrawing = true;
         mResult = null;
-        string url = string.Format("{0}?round={1}&num={2}&isExtra={3}", DrawNormalURL, mCurrentRound, numPerTime, isExtra);
+        string url = string.Format("{0}?round={1}&num={2}&isExtra={3}", DrawNormalURL, round, numPerTime, isExtra);
         using (UnityWebRequest webReqest = UnityWebRequest.Get(url))
         {
             yield return webReqest.SendWebRequest();
