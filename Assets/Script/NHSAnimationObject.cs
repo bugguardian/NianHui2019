@@ -31,36 +31,40 @@ public class NHSAnimationObject
     {
         _animTime = 0;
     }
-    public void UpdateTransformAnim(float speed = 5f)
+    public bool UpdateTransformAnim(float speed = 4f)
     {
         _animTime += Time.deltaTime * speed;
         for (int i = 0; i < _activePhotoObjects.Count; i++)
         {
             _activePhotoObjects[i].transform.position = Vector3.Lerp(_beginTrans[i].position, _endTrans[i].position, _animTime);
-            _activePhotoObjects[i].transform.position = Vector3.Lerp(_beginTrans[i].position, _endTrans[i].position, _animTime);
+            _activePhotoObjects[i].transform.localScale = Vector3.Lerp(_beginTrans[i].scale, _endTrans[i].scale, _animTime);
         }
+        if (_animTime > 1) { _animTime = 0; return false; } else return true;
     }
-    private GameObject _targetSpriteObj;
-    private Sprite[] _spriteSequence;
-    private int _spriteSequenceAnimFPS = 25;
-    private int _spriteSequenceAnimBeginFrame = 0;
-    public void InitSequenceAnim(GameObject targetSpriteObj, Sprite[] sprites, int fps, int begin = 0)
+    private GameObject _SequenceAnimObj;
+    private int _SequenceAnimFPS = 25;
+    private int _SequenceAnimBeginFrame = 0;
+    private Texture2D[] _Texture2DSequence;
+    private Sprite[] _SpriteSequence;
+    public void InitTextureSequenceAnim(GameObject SequenceShowObj, Texture2D[] textures, int fps, int begin = 0)
     {
-        _targetSpriteObj = targetSpriteObj;
-        _spriteSequence = sprites;
-        _spriteSequenceAnimFPS = fps;
-        _spriteSequenceAnimBeginFrame = begin;
+        _SequenceAnimObj = SequenceShowObj;
+        _Texture2DSequence = textures;
+        _SequenceAnimFPS = fps;
+        _SequenceAnimBeginFrame = begin;
     }
-    public void UpdateSequenceAnim()
+    public void UpdateTextureSequenceAnim()
     {
-        _targetSpriteObj.GetComponent<Image>().sprite = UpdateSequenceAnim(_spriteSequence, _spriteSequenceAnimFPS, _spriteSequenceAnimBeginFrame);
+        _SequenceAnimObj.GetComponent<RawImage>().texture = UpdateSequenceAnim(_Texture2DSequence, _SequenceAnimFPS, _SequenceAnimBeginFrame);
     }
-    private Sprite UpdateSequenceAnim(Sprite[] sprites, int fps, int begin = 0)
+
+    private T UpdateSequenceAnim<T>(T[] sequence, int fps, int begin = 0)
     {
-        return UpdateSequenceAnim(sprites, ref _frame, begin, sprites.Length - 1, fps, Time.deltaTime, ref _totalFrame);
+        return UpdateSequenceAnim(sequence, ref _frame, begin, sequence.Length - 1, fps, Time.deltaTime, ref _totalFrame);
     }
-    private Sprite UpdateSequenceAnim(Sprite[] sprites, ref int frame, int minFrame, int maxFrame, int fps, float deltaTime, ref float totalTime)
+    private T UpdateSequenceAnim<T>(T[] sequence, ref int frame, int minFrame, int maxFrame, int fps, float deltaTime, ref float totalTime)
     {
+        minFrame = Mathf.Min(minFrame, maxFrame);
         totalTime += deltaTime;
         if (totalTime >= (1f / fps - 0.01f))
         {
@@ -69,6 +73,6 @@ public class NHSAnimationObject
             if (frame > maxFrame) frame = minFrame;
             totalTime = 0;
         }
-        return sprites[frame];
+        return sequence[frame];
     }
 }

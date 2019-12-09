@@ -58,6 +58,12 @@ public class NHSRenderObject
     {
         return CreateCombineRT(mIds, out numX, out numY);
     }
+    public RenderTexture CreateCombineRT(PersonInfo[] pis, out int numX, out int numY)
+    {
+        int[] ids = new int[pis.Length];
+        for (int i = 0; i < pis.Length; i++) ids[i] = pis[i].No;
+        return CreateCombineRT(ids, out numX, out numY);
+    }
     public RenderTexture CreateCombineRT(int[] ids, out int numX, out int numY)
     {
         if (rt == null)
@@ -85,8 +91,11 @@ public class NHSRenderObject
             mOffsetScale.z = _width / RTW;
             mOffsetScale.w = _height / RTH;
             rtMat.SetVector("_OffsetScale", mOffsetScale);
-            if (!textures.ContainsKey(ids[index])) { continue; }
-            Graphics.Blit(textures[ids[index]], rt, rtMat);
+
+            if (textures.ContainsKey(ids[index]))
+                Graphics.Blit(textures[ids[index]], rt, rtMat);
+            else
+                Graphics.Blit(textures[0], rt, rtMat);
         }
 
         return rt;

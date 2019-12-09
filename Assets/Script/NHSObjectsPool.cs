@@ -56,7 +56,9 @@ public class NHSObjectsPool
     {
         GameObject obj = null;
 
-        if (_photos.ContainsKey(employeeID) && _objPool.Count > 0)
+        if (!_photos.ContainsKey(employeeID)) employeeID = 0;
+
+        if (_objPool.Count > 0)
         {
             obj = _objPool.Dequeue();
             obj.transform.Find("canvas").GetComponent<Canvas>().worldCamera = Camera.main;
