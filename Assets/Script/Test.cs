@@ -16,7 +16,7 @@ public class Test : MonoBehaviour
 
         if(GUI.Button(new Rect(100, 100, 100, 40), "抽奖"))
         {
-            StartCoroutine(DataBase.Inst.Normal(20, false, (PersionInfo[] result, RoundRemainInfo roundInfo)=>{
+            StartCoroutine(DataBase.Inst.Normal(1, 20, false, (PersionInfo[] result, RoundRemainInfo roundInfo)=>{
             
                 for(int i = 0; i < result.Length; i++)
                 {
