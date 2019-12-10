@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -65,6 +66,7 @@ enum EType
     eNormal,  // 普通未中奖
     eExtra,  // 老板核心加奖未中奖
     eOther, // 其它未中奖
+    eNormalExtra,
 }
 
 public struct RoundRemainInfo
@@ -94,6 +96,22 @@ struct RoundInfo
     public int round;
     public int num;
     public string award;
+    public int remain;
+
+    public static RoundInfo FromStringOne(string str)
+    {
+        string pattern = "(\\{\"id\":(\\d+),\"round\":\"(\\w+)\",\"num\":(\\d+),\"award\":\"(\\w+)\",\"addr\":(\\w+),\"remain\":(\\d+)\\})";
+        var match = Regex.Match(str, pattern);
+        RoundInfo info = new RoundInfo()
+        {
+            Id = int.Parse(match.Groups[2].Value),
+            round = int.Parse(match.Groups[3].Value),
+            num = int.Parse(match.Groups[4].Value),
+            award = match.Groups[5].Value,
+            remain = int.Parse(match.Groups[7].Value)
+        };
+        return info;
+    }
 
     public static RoundInfo[] FromString(string str)
     {
@@ -135,11 +153,11 @@ struct ExtraInfo
 
 class NHSDataBase
 {
-    private int mCurrentRound = 1;
-
     public delegate void Callback(PersonInfo[] result);
 
     public delegate void RoundInfoCallback(RoundInfo[] result);
+
+    public delegate void OneRoundInfoCallback(RoundInfo result);
 
     public delegate void ExtraCallback(PersonInfo[] result, ExtraInfo info);
 
@@ -161,6 +179,8 @@ class NHSDataBase
 
     private static string RequireNormalURL = URLBase +"/round/";
 
+
+    private Dictionary<EType, List<List<PersonInfo>>> mCurrentInfos = new Dictionary<EType, List<List<PersonInfo>>>();
 
 
     private static NHSDataBase mInst = null;
@@ -189,7 +209,7 @@ class NHSDataBase
 
     public IEnumerator Normal(int round, int numPerTime, bool isExtra, NormalCallback callBack = null)
     {
-        if(numPerTime <= 0 || isDrawing)
+        if (numPerTime <= 0 || isDrawing)
         {
             yield return null;
         }
@@ -199,7 +219,7 @@ class NHSDataBase
         using (UnityWebRequest webReqest = UnityWebRequest.Get(url))
         {
             yield return webReqest.SendWebRequest();
-            if(webReqest.isNetworkError)
+            if (webReqest.isNetworkError)
             {
                 Debug.Log("网络连接错误");
             }
@@ -207,6 +227,18 @@ class NHSDataBase
             string value = webReqest.downloadHandler.text;
             mResult = PersonInfo.ToPersionInfo(value);
 
+            List<List<PersonInfo>> typeList = null;
+            EType t = isExtra ? EType.eNormalExtra : EType.eNormal;
+            if (!mCurrentInfos.TryGetValue(t, out typeList))
+            {
+                typeList = new List<List<PersonInfo>>();
+                mCurrentInfos.Add(t, typeList);
+            }
+            while (typeList.Count <= round - 1)
+            {
+                typeList.Add(new List<PersonInfo>());
+            }
+            typeList[round - 1].AddRange(mResult);
             callBack?.Invoke(mResult, RoundRemainInfo.FromString(value));
         }
     }
@@ -230,6 +262,15 @@ class NHSDataBase
             isDrawing = false;
             string value = webReqest.downloadHandler.text;
             mResult = PersonInfo.ToPersionInfo(value);
+            List<List<PersonInfo>> typeList = null;
+            if(!mCurrentInfos.TryGetValue(EType.eExtra, out typeList))
+            {
+                typeList = new List<List<PersonInfo>>();
+                typeList.Add(new List<PersonInfo>());
+                mCurrentInfos.Add(EType.eExtra, typeList);
+                
+            }
+            typeList[0].AddRange(mResult);
             callBack?.Invoke(mResult, ExtraInfo.FromString(value));
         }
     }
@@ -253,8 +294,30 @@ class NHSDataBase
             isDrawing = false;
             string value = webReqest.downloadHandler.text;
             mResult = PersonInfo.ToPersionInfo(value);
+            List<List<PersonInfo>> typeList = null;
+            if (!mCurrentInfos.TryGetValue(EType.eOther, out typeList))
+            {
+                typeList = new List<List<PersonInfo>>();
+                typeList.Add(new List<PersonInfo>());
+                mCurrentInfos.Add(EType.eExtra, typeList);
+
+            }
+            typeList[0].AddRange(mResult);
             callBack?.Invoke(mResult);
         }
+    }
+
+    public List<PersonInfo> GetLucklyPersions(EType type, int round = 0)
+    {
+        List<List<PersonInfo>> typeList = null;
+        if(mCurrentInfos.TryGetValue(type, out typeList))
+        {
+            if(typeList.Count > round)
+            {
+                return typeList[round];
+            }
+        }
+        return new List<PersonInfo>();
     }
 
     public IEnumerator GetUnlucky(EType type, int round = 0, Callback callBack = null)
@@ -277,6 +340,27 @@ class NHSDataBase
             string value = webReqest.downloadHandler.text;
             mResult = PersonInfo.ToPersionInfo(value);
             callBack?.Invoke(mResult);
+        }
+    }
+
+    public IEnumerator RequireRoundInfo(int round, OneRoundInfoCallback callback)
+    {
+        if (isDrawing)
+        {
+            yield return null;
+        }
+        isDrawing = true;
+        mResult = null;
+        using (UnityWebRequest webReqest = UnityWebRequest.Get(RequireNormalURL + round))
+        {
+            yield return webReqest.SendWebRequest();
+            if (webReqest.isNetworkError)
+            {
+                Debug.Log("网络连接错误");
+            }
+            isDrawing = false;
+            string value = webReqest.downloadHandler.text;
+            callback?.Invoke(RoundInfo.FromStringOne(value));
         }
     }
 
@@ -306,7 +390,6 @@ class NHSDataBase
         using (UnityWebRequest webReqest = UnityWebRequest.Get(ResetURL))
         {
             yield return webReqest.SendWebRequest();
-            mCurrentRound = 1;
         }
     }
 }
