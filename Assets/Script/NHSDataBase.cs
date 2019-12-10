@@ -307,14 +307,14 @@ class NHSDataBase
         }
     }
 
-    public List<PersonInfo> GetLucklyPersions(EType type, int round = 0)
+    public List<PersonInfo> GetLucklyPersions(EType type, int round = 1)
     {
         List<List<PersonInfo>> typeList = null;
         if(mCurrentInfos.TryGetValue(type, out typeList))
         {
-            if(typeList.Count > round)
+            if(typeList.Count > round-1)
             {
-                return typeList[round];
+                return typeList[round-1];
             }
         }
         return new List<PersonInfo>();
